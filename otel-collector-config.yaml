@@ -10,19 +10,16 @@ exporters:
   debug:
     verbosity: basic
 
-  # ClickHouse — write to the distributed tables so data fans out across shards
+  # ClickHouse — traces, metrics, and logs stored in the otel database
   clickhouse:
     endpoint: "tcp://clickhouse-s1r1.railway.internal:9000?dial_timeout=10s&compress=lz4"
     database: otel
     username: default
     password: "${env:CLICKHOUSE_PASSWORD}"
-    logs_table_name: otel_logs_distributed
-    traces_table_name: otel_traces_distributed
-    metrics_table_name: otel_metrics_gauge_distributed
-    sum_table_name: otel_metrics_sum_distributed
-    histogram_table_name: otel_metrics_histogram_distributed
-    ttl: 720h  # 30 days
-    create_schema: false
+    ttl: 720h
+    create_schema: true
+    async_insert: true
+    compress: lz4
     retry_on_failure:
       enabled: true
       initial_interval: 5s
@@ -53,7 +50,6 @@ processors:
     timeout: 5s
     send_batch_max_size: 11000
 
-  # Add resource attributes for identification
   resource:
     attributes:
       - key: deployment.environment
